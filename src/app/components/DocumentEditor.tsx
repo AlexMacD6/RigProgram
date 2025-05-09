@@ -277,9 +277,15 @@ const DocumentEditor = ({ document, onSave, onCancel, className }: DocumentEdito
   };
 
   const updateSectionContent = (index: number, content: string) => {
-    const newSections = [...sections];
-    newSections[index] = { ...newSections[index], content };
-    setSections(newSections);
+    // Using functional state update to avoid potential state batching issues
+    setSections(prevSections => {
+      const newSections = [...prevSections];
+      newSections[index] = { ...newSections[index], content };
+      return newSections;
+    });
+    
+    // Skip setting hasUnsavedChanges on every keystroke to avoid re-renders
+    // We'll rely on the useEffect dependency array to track changes
   };
 
   const updateSectionTitle = (index: number, title: string) => {
