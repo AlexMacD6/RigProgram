@@ -3,12 +3,13 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { cn } from '../utils/ui';
-import { StarterKit, Image, createResizableImageExtension } from './EditorExtensions';
+import { StarterKit, Image, createResizableImageExtension, lazyLoadExtensions } from './EditorExtensions';
 import ResizableImageNode from './ResizableImageNode';
 import React from 'react';
 import { CoreIcons } from './EditorIcons';
 import { getEditorStyles } from '../utils/editorStyles';
 import { BaseEditorProps } from '../utils/editorTypes';
+import { DocumentLinkExtension } from './DocumentLink';
 
 // Create a simplified toolbar component
 const SimplifiedToolbar = ({ editor }: { editor: any }) => {
@@ -60,9 +61,17 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
   const [fullEditorLoaded, setFullEditorLoaded] = useState<boolean>(false);
   const [FullEditor, setFullEditor] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const [extendedExtensions, setExtendedExtensions] = useState<any>(null);
   
   // Configure the ResizableImageExtension with our node
   const ResizableImageExtension = createResizableImageExtension(ResizableImageNode);
+  
+  // Load extended extensions when component mounts
+  useEffect(() => {
+    lazyLoadExtensions().then(extensions => {
+      setExtendedExtensions(extensions);
+    });
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -71,12 +80,19 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
           levels: [1, 2, 3],
         },
       }),
+      ...(extendedExtensions ? [
+        extendedExtensions.Table,
+        extendedExtensions.TableRow,
+        extendedExtensions.TableCell,
+        extendedExtensions.TableHeader,
+      ] : []),
       ResizableImageExtension.configure({
         HTMLAttributes: {
           class: 'resizable-image',
         },
         allowBase64: true,
       }),
+      DocumentLinkExtension,
     ],
     content: initialContent || '<p>Add content here...</p>',
     editable: !readOnly,
@@ -86,7 +102,7 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
     parseOptions: {
       preserveWhitespace: 'full',
     },
-  }, [initialContent]);
+  }, [initialContent, extendedExtensions]);
 
   // Listen for the full editor load request
   useEffect(() => {

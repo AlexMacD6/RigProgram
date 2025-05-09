@@ -13,6 +13,7 @@ import {
 import ResizableImageNode from './ResizableImageNode';
 import { getEditorStyles } from '../utils/editorStyles';
 import { BaseEditorProps } from '../utils/editorTypes';
+import { DocumentLinkExtension } from './DocumentLink';
 
 const Editor = ({ initialContent, onChange, readOnly = false, className }: BaseEditorProps) => {
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -56,6 +57,7 @@ const Editor = ({ initialContent, onChange, readOnly = false, className }: BaseE
         },
         allowBase64: true,
       }),
+      DocumentLinkExtension,
     ],
     content: initialContent || '<p>Add content here...</p>',
     editable: !readOnly,

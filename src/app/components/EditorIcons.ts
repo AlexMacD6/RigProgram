@@ -12,7 +12,8 @@ import {
   Trash2,
   MoveUp,
   MoveDown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ExternalLink
 } from 'lucide-react';
 
 // Core icons that are used in the main UI
@@ -28,7 +29,8 @@ export const CoreIcons = {
   Trash2,
   MoveUp,
   MoveDown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ExternalLink
 };
 
 // Lazily load less frequently used icons

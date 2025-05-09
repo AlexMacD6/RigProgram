@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { getDocuments, getRecentActivities } from '../utils/storage';
 import { Document, equipmentCategories, operationCategories } from '../types';
 import Search from './Search';
+import DocumentLinkRenderer from './DocumentLinkRenderer';
 import { 
   ChevronRight, 
   FilePlus, 
@@ -115,6 +116,9 @@ const Layout = ({ children }: LayoutProps) => {
         {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
       
+      {/* Document link runtime handler */}
+      <DocumentLinkRenderer />
+      
       {/* Sidebar */}
       <div className={cn(
         "w-64 bg-rc-fg border-r border-gray-200 flex flex-col h-full overflow-hidden transform transition-transform",
@@ -186,7 +190,7 @@ const Layout = ({ children }: LayoutProps) => {
             {/* Categories */}
             <div className="mt-4">
               <h2 className="px-4 text-gray-500 text-sm font-medium uppercase tracking-wider">
-                <span>Categories</span>
+                <span>DrillBabyDrill</span>
               </h2>
               <div className="mt-2 space-y-4">
                 {Object.keys(documentsByCategory)

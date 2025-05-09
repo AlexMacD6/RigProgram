@@ -1,10 +1,12 @@
 'use client';
 
 import { Editor } from '@tiptap/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '../utils/ui';
 import { CoreIcons, loadExtendedIcons } from './EditorIcons';
 import { ToolbarButtonProps } from '../utils/editorTypes';
+import DocumentSelectorPopup from './DocumentSelectorPopup';
+import { getDocumentById } from '../utils/storage';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -16,6 +18,7 @@ const EditorToolbar = ({ editor, onAddImage }: EditorToolbarProps) => {
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageAlignmentControls, setShowImageAlignmentControls] = useState(false);
   const [extendedIcons, setExtendedIcons] = useState<any>(null);
+  const [showDocumentSelector, setShowDocumentSelector] = useState<boolean>(false);
 
   // Load extended icons when component mounts
   useEffect(() => {
@@ -143,6 +146,51 @@ const EditorToolbar = ({ editor, onAddImage }: EditorToolbarProps) => {
   // Only render extended buttons if icons are loaded
   const renderExtendedButtons = extendedIcons !== null;
 
+  // Add a document link
+  const addDocumentLink = useCallback(() => {
+    setShowDocumentSelector(true);
+  }, []);
+
+  const insertDocumentLink = useCallback((documentId: string) => {
+    if (editor && documentId) {
+      // Get the document title
+      const document = getDocumentById(documentId);
+      const documentTitle = document ? document.title : 'Document';
+      
+      // Check if we have a selection
+      const { from, to } = editor.state.selection;
+      
+      if (from === to) {
+        // No selection, insert the document title with mark
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'text',
+            text: documentTitle,
+            marks: [{
+              type: 'documentLink',
+              attrs: { documentId, documentTitle }
+            }]
+          })
+          .run();
+      } else {
+        // Apply mark to the selected text
+        editor
+          .chain()
+          .focus()
+          .setMark('documentLink', { documentId, documentTitle })
+          .run();
+      }
+      
+      setShowDocumentSelector(false);
+    }
+  }, [editor]);
+
+  const closeDocumentSelector = useCallback(() => {
+    setShowDocumentSelector(false);
+  }, []);
+
   return (
     <div className="flex flex-wrap items-center border-b border-gray-300 p-2 gap-1 bg-gray-50">
       {renderExtendedButtons && (
@@ -268,6 +316,13 @@ const EditorToolbar = ({ editor, onAddImage }: EditorToolbarProps) => {
           >
             <extendedIcons.Table size={18} />
           </ToolbarButton>
+          
+          <ToolbarButton 
+            onClick={addDocumentLink}
+            title="Link to another document"
+          >
+            <CoreIcons.ExternalLink size={18} />
+          </ToolbarButton>
         </>
       )}
       
@@ -326,6 +381,13 @@ const EditorToolbar = ({ editor, onAddImage }: EditorToolbarProps) => {
             Cancel
           </button>
         </div>
+      )}
+      
+      {showDocumentSelector && (
+        <DocumentSelectorPopup 
+          onSelect={insertDocumentLink}
+          onCancel={closeDocumentSelector}
+        />
       )}
     </div>
   );
