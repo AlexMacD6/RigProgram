@@ -62,6 +62,8 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
   const [FullEditor, setFullEditor] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const [extendedExtensions, setExtendedExtensions] = useState<any>(null);
+  const lastFocusTimeRef = useRef<number>(0);
+  const lastCursorPositionRef = useRef<number | null>(null);
   
   // Configure the ResizableImageExtension with our node
   const ResizableImageExtension = createResizableImageExtension(ResizableImageNode);
@@ -98,8 +100,14 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
     editable: !readOnly,
     onUpdate: ({ editor }) => {
       // Save the current selection state
-      const { from, to } = editor.state.selection;
+      const { from } = editor.state.selection;
       const wasEditorFocused = editor.isFocused;
+      
+      // Update last focus time and cursor position
+      if (wasEditorFocused) {
+        lastFocusTimeRef.current = Date.now();
+        lastCursorPositionRef.current = from;
+      }
 
       // Debounce content updates to prevent focus loss
       const html = editor.getHTML();
@@ -127,6 +135,69 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
       preserveWhitespace: 'full',
     },
   }, [initialContent, extendedExtensions]);
+
+  // Focus recovery mechanism
+  useEffect(() => {
+    if (!editor || readOnly) return;
+
+    // Track focus related events
+    const handleEditorFocus = () => {
+      lastFocusTimeRef.current = Date.now();
+    };
+
+    const handleEditorBlur = () => {
+      // Store the position before blur happens
+      if (editor.state) {
+        lastCursorPositionRef.current = editor.state.selection.from;
+      }
+    };
+
+    // Add event listeners for tracking focus
+    if (editorRef.current) {
+      const editorElement = editorRef.current.querySelector('.ProseMirror');
+      if (editorElement) {
+        editorElement.addEventListener('focus', handleEditorFocus);
+        editorElement.addEventListener('blur', handleEditorBlur);
+      }
+    }
+
+    // Create a focus recovery interval
+    // This will periodically check if the editor should have focus but doesn't
+    const focusRecoveryInterval = setInterval(() => {
+      // Only attempt recovery if:
+      // 1. The editor exists and isn't currently focused
+      // 2. The user was actively editing recently (within the last 5 seconds)
+      // 3. The document/window still has focus (we don't want to steal focus if user switched apps)
+      const timeSinceLastFocus = Date.now() - lastFocusTimeRef.current;
+      const recentlyActive = timeSinceLastFocus < 5000; // 5 seconds
+      
+      if (editor && !editor.isFocused && recentlyActive && document.hasFocus()) {
+        editor.commands.focus();
+        
+        // Restore cursor position if we have it
+        if (lastCursorPositionRef.current !== null) {
+          try {
+            editor.commands.setTextSelection(lastCursorPositionRef.current);
+          } catch (e) {
+            // Silently fail if position is no longer valid
+          }
+        }
+      }
+    }, 1000); // Check every second for focus loss
+
+    // Cleanup event listeners and intervals
+    return () => {
+      clearInterval(focusRecoveryInterval);
+      
+      if (editorRef.current) {
+        const editorElement = editorRef.current.querySelector('.ProseMirror');
+        if (editorElement) {
+          editorElement.removeEventListener('focus', handleEditorFocus);
+          editorElement.removeEventListener('blur', handleEditorBlur);
+        }
+      }
+    };
+  }, [editor, readOnly]);
 
   // Listen for the full editor load request
   useEffect(() => {

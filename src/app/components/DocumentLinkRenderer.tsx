@@ -9,18 +9,50 @@ const DocumentLinkRenderer = () => {
   const router = useRouter();
 
   useEffect(() => {
+    // Helper function to check if an element is inside an editor
+    const isElementInEditor = (element: HTMLElement): boolean => {
+      let current: HTMLElement | null = element;
+      
+      while (current) {
+        // Check for TipTap editor or its content area
+        if (
+          current.classList.contains('ProseMirror') || 
+          current.classList.contains('tiptap-editor') ||
+          current.classList.contains('EditorContent') ||
+          current.getAttribute('data-editor-id') ||
+          current.classList.contains('editor-container')
+        ) {
+          return true;
+        }
+        current = current.parentElement;
+      }
+      
+      return false;
+    };
+
     // Attach click handler to document links
     const handleDocumentLinkClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Ignore clicks inside editors
+      if (isElementInEditor(target)) {
+        return;
+      }
+      
       // Check if the click was on a document link or its child element
-      let target = event.target as HTMLElement;
+      let current = target;
       let documentLinkElement: HTMLElement | null = null;
 
       // Traverse up the DOM to find if we clicked on a document link or its child
-      while (target && !documentLinkElement) {
-        if (target.hasAttribute('data-document-id')) {
-          documentLinkElement = target;
+      while (current && !documentLinkElement) {
+        if (current.hasAttribute('data-document-id')) {
+          documentLinkElement = current;
         } else {
-          target = target.parentElement as HTMLElement;
+          current = current.parentElement as HTMLElement;
+          if (!current || isElementInEditor(current)) {
+            // Stop traversing if we reach an editor
+            break;
+          }
         }
       }
 
@@ -46,7 +78,21 @@ const DocumentLinkRenderer = () => {
 
     // Observe DOM to add styling to document links
     const addDocumentLinkStyles = () => {
+      // Get all active editor elements so we can exclude them
+      const editorElements = Array.from(document.querySelectorAll('.ProseMirror, .EditorContent, [data-editor-id]'));
+      
+      // Find document links that are not inside editors
       document.querySelectorAll('span.document-link').forEach(element => {
+        // Skip links inside editors
+        if (editorElements.some(editor => editor.contains(element))) {
+          return;
+        }
+        
+        // Skip if the element itself is inside an editor
+        if (isElementInEditor(element as HTMLElement)) {
+          return;
+        }
+        
         const documentId = element.getAttribute('data-document-id');
         const documentTitle = element.getAttribute('data-document-title') || 'Document';
         
@@ -109,11 +155,37 @@ const DocumentLinkRenderer = () => {
       
       mutations.forEach(mutation => {
         if (mutation.type === 'childList') {
+          // Skip mutations inside editors
+          if (isElementInEditor(mutation.target as HTMLElement)) {
+            return;
+          }
+          
+          // Find any editor nodes that we should completely skip
+          const editorNodes = Array.from(document.querySelectorAll('.ProseMirror, .EditorContent, [data-editor-id]'));
+          
           mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               const element = node as HTMLElement;
-              if (element.querySelector('.document-link') || 
-                  (element.classList && element.classList.contains('document-link'))) {
+              
+              // Skip if node is or contains an editor
+              if (element.classList && (
+                  element.classList.contains('ProseMirror') ||
+                  element.classList.contains('EditorContent') ||
+                  element.getAttribute('data-editor-id')
+              )) {
+                return;
+              }
+              
+              // Skip if node is inside an editor
+              if (editorNodes.some(editor => editor.contains(element))) {
+                return;
+              }
+              
+              // Only look for document links in non-editor elements
+              if (!isElementInEditor(element) && (
+                element.querySelector('.document-link') || 
+                (element.classList && element.classList.contains('document-link'))
+              )) {
                 shouldStyle = true;
               }
             }
@@ -122,10 +194,12 @@ const DocumentLinkRenderer = () => {
       });
       
       if (shouldStyle) {
-        addDocumentLinkStyles();
+        // Use a short timeout to avoid interfering with editor focus
+        setTimeout(addDocumentLinkStyles, 100);
       }
     });
     
+    // Observe the document body but exclude editor areas
     observer.observe(document.body, { 
       childList: true, 
       subtree: true 
