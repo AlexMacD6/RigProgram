@@ -46,7 +46,15 @@ const DocumentLinkRenderer = () => {
 
     // Observe DOM to add styling to document links
     const addDocumentLinkStyles = () => {
-      document.querySelectorAll('span.document-link').forEach(element => {
+      // Store active element to restore focus later if needed
+      const activeElement = document.activeElement;
+
+      document.querySelectorAll('span.document-link').forEach((element) => {
+        // Skip if this element is inside an editor
+        if (isElementInEditor(element as HTMLElement)) {
+          return;
+        }
+
         const documentId = element.getAttribute('data-document-id');
         const documentTitle = element.getAttribute('data-document-title') || 'Document';
         
@@ -95,6 +103,31 @@ const DocumentLinkRenderer = () => {
           }
         }
       });
+
+      // Restore focus if it was in an editor
+      if (activeElement && isElementInEditor(activeElement as HTMLElement)) {
+        (activeElement as HTMLElement).focus();
+      }
+    };
+
+    // Helper function to check if an element is inside an editor
+    const isElementInEditor = (element: HTMLElement): boolean => {
+      let current: HTMLElement | null = element;
+      
+      while (current) {
+        // Check for TipTap editor or its content area
+        if (
+          current.classList.contains('ProseMirror') || 
+          current.classList.contains('tiptap-editor') ||
+          current.classList.contains('EditorContent') ||
+          current.getAttribute('data-editor-id')
+        ) {
+          return true;
+        }
+        current = current.parentElement;
+      }
+      
+      return false;
     };
 
     // Add handlers
@@ -109,11 +142,18 @@ const DocumentLinkRenderer = () => {
       
       mutations.forEach(mutation => {
         if (mutation.type === 'childList') {
+          // Skip processing if the mutation happened inside an editor
+          if (isElementInEditor(mutation.target as HTMLElement)) {
+            return;
+          }
+          
           mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               const element = node as HTMLElement;
-              if (element.querySelector('.document-link') || 
-                  (element.classList && element.classList.contains('document-link'))) {
+              if (!isElementInEditor(element) && (
+                element.querySelector('.document-link') || 
+                (element.classList && element.classList.contains('document-link'))
+              )) {
                 shouldStyle = true;
               }
             }
@@ -126,10 +166,19 @@ const DocumentLinkRenderer = () => {
       }
     });
     
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: true 
-    });
+    // Only observe parts of the DOM that are not editors
+    const observeAllExceptEditors = () => {
+      // First disconnect any existing observation
+      observer.disconnect();
+      
+      // Then observe the body but we'll filter out editor content in the callback
+      observer.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+      });
+    };
+    
+    observeAllExceptEditors();
 
     return () => {
       document.removeEventListener('click', handleDocumentLinkClick);
