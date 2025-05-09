@@ -1,11 +1,13 @@
 'use client';
 
 import { Document } from '../types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LightEditor from './LightEditor';
-import { addToRecentlyViewed } from '../utils/storage';
+import { addToRecentlyViewed, getDocumentById } from '../utils/storage';
 import { cn } from '../utils/ui';
 import { CoreIcons } from './EditorIcons';
+import { ArrowLeft } from 'lucide-react';
 
 interface DocumentViewerProps {
   document: Document;
@@ -16,16 +18,49 @@ interface DocumentViewerProps {
 
 const DocumentViewer = ({ document, onEdit, onDelete, className }: DocumentViewerProps) => {
   const [activeSection, setActiveSection] = useState<number>(0);
+  const [referringDocument, setReferringDocument] = useState<Document | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Track that this document was viewed
   if (typeof window !== 'undefined') {
     addToRecentlyViewed(document.id);
   }
+  
+  // Get the referring document if any
+  useEffect(() => {
+    const fromParam = searchParams.get('from');
+    if (fromParam && fromParam !== '') {
+      const refDoc = getDocumentById(fromParam);
+      if (refDoc) {
+        setReferringDocument(refDoc);
+      }
+    }
+  }, [searchParams]);
+  
+  // Handle back button click
+  const handleBackClick = () => {
+    if (referringDocument) {
+      router.push(`/document/${referringDocument.id}`);
+    }
+  };
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
       <div className="bg-rc-fg border-b border-gray-200 p-4 flex justify-between items-center">
         <div>
+          {/* Bold Back button at the top */}
+          {referringDocument && (
+            <button 
+              onClick={handleBackClick}
+              className="flex items-center text-rc-accent hover:underline mb-2 font-bold"
+              aria-label={`Back to ${referringDocument.title}`}
+            >
+              <ArrowLeft size={16} className="mr-1" />
+              <span className="truncate">Back to: {referringDocument.title}</span>
+            </button>
+          )}
+          
           <h1 className="text-2xl font-bold text-rc-bg font-poppins">{document.title}</h1>
           <div className="flex gap-2 items-center mt-1">
             <span className="px-2 py-1 bg-gray-100 text-rc-bg text-xs rounded-full">
@@ -75,6 +110,17 @@ const DocumentViewer = ({ document, onEdit, onDelete, className }: DocumentViewe
         </div>
         
         <div className="flex space-x-2">
+          {/* Back button next to edit and delete */}
+          {referringDocument && (
+            <button 
+              onClick={handleBackClick}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-rc-bg rounded-md min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-gray-300/50 flex items-center"
+            >
+              <ArrowLeft size={16} className="mr-1" />
+              <span>Back</span>
+            </button>
+          )}
+          
           {onEdit && (
             <button 
               onClick={onEdit}
