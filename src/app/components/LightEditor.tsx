@@ -97,13 +97,31 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
     content: initialContent || '<p>Add content here...</p>',
     editable: !readOnly,
     onUpdate: ({ editor }) => {
+      // Save the current selection state
+      const { from, to } = editor.state.selection;
+      const wasEditorFocused = editor.isFocused;
+
       // Debounce content updates to prevent focus loss
-      // Only send changes after a reasonable pause in typing
       const html = editor.getHTML();
       clearTimeout((window as any).lightEditorUpdateTimeout);
       (window as any).lightEditorUpdateTimeout = setTimeout(() => {
         onChange(html);
-      }, 500);
+        
+        // After the state update completes, restore focus and selection if needed
+        if (wasEditorFocused) {
+          setTimeout(() => {
+            editor.commands.focus();
+            // Try to restore cursor position
+            try {
+              // Handle both selection and single cursor position
+              editor.commands.setTextSelection(from);
+            } catch (e) {
+              // If restoration fails, at least ensure editor is focused
+              editor.commands.focus();
+            }
+          }, 0);
+        }
+      }, 300); // Reduced from 500ms to make it feel more responsive
     },
     parseOptions: {
       preserveWhitespace: 'full',
