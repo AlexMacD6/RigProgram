@@ -1,0 +1,55 @@
+# ── GENERAL CODE STYLE ──────────────────────────────────────────────
+- Comment all code. Prefer JSDoc / TSDoc for public APIs.
+- Use TypeScript strict mode; no // @ts-ignore unless unavoidable.
+- Run eslint --fix & prettier on save (use the shared rigconcierge config).
+- Follow Conventional Commits for git messages (feat:, fix:, chore:, etc.).
+- Break any file >250 LOC into smaller modules / components.
+- Keep a CHANGELOG.md; log every breaking or user-facing change, skip lint fixes.
+– Always prefer simple solutions  
+– Avoid duplication of code whenever possible, which means checking for other areas of the codebase that might already have similar code and functionality  
+–– You are careful to only make changes that are requested or you are confident are well understood and related to the change being requested  
+– When fixing an issue or bug, do not introduce a new pattern or technology without first exhausting all options for the existing implementation. And if you finally do this, make sure to remove the old implementation afterwards so we don’t have duplicate logic.  
+– Keep the codebase very clean and organized  
+– Avoid writing scripts in files if possible, especially if the script is likely only to be run once  
+– Avoid having files over 200–300 lines of code. Refactor at that point.  
+– Mocking data is only needed for tests, never mock data for dev or prod  
+– Never overwrite my .env file without first asking and confirming
+
+# ── ARCHITECTURE / NEXT.JS ─────────────────────────────────────────
+- Use the App Router with React Server Components by default.
+- CRUD → Next.js 15 **Server Actions** in @/api, not pages/api routes.
+
+# ── BRAND GUIDELINES (from Rig Concierge Brand Book) ───────────────
+- Primary colors:  
+  - **Black #000000 (rc-bg)**  
+  - **Gold #D4AF3D (rc-accent)**  
+  - **White #FFFFFF (rc-fg)** :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
+- Include those three in tailwind.config.ts as rc.bg / rc.accent / rc.fg.
+- Typography: use **Poppins**—Bold for headings, Regular for body. Fallback: ui-sans-serif.
+- Logo usage: respect “X” safe-margin (width of the letter **C**) on all sides; never scale below 150 px on mobile. :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
+- Acceptable logo positions: top-left, top-center, bottom-right, or centered.
+- Never stretch, recolor, add shadows, or overlay logo on low-contrast backgrounds.
+- Monochrome variant only in single-color production processes (laser, embroidery).
+- Brand pattern assets live in /public/brand/pattern-*.svg; import as CSS `mask-image`.
+
+# ── UI COMPONENT GUIDELINES ────────────────────────────────────────
+- Shadcn UI as the base library; wrap defaults in `@/components/ui/*`.
+- All buttons & links must pass WCAG 2.1 AA color-contrast against backgrounds.
+- Minimum interactive target: 44 × 44 CSS px.
+- Provide keyboard -focus ring (`outline-ring/50`) on all focusable elements.
+- Use Framer-Motion v11 for animations; default spring stiffness = 170.
+
+# ── ASSET HANDLING ─────────────────────────────────────────────────
+- Images ≤150 kB: import static via next/image; larger → S3 + CloudFront signed URL.
+- Upload DOCX images through Mammoth → S3, then rewrite <img src> before save.
+- Keep all brand media (logos, pattern, favicons) in /public/brand/.
+
+# ── ACCESSIBILITY (A11y) ───────────────────────────────────────────
+- Every <img> needs meaningful alt text (or `alt=""` if decorative).
+- Use semantic HTML5 (nav, main, aside, etc.); avoid div soup.
+- Provide ARIA-labels for custom controls (dropdowns, dialogs).
+
+# ── DOCUMENTATION & DX ─────────────────────────────────────────────
+- Storybook runs at http://localhost:6006; keep stories up-to-date.
+- Use “TODO(username):” comments; Cursor will list them on build.
+

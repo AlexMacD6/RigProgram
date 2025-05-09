@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --rc-bg: #000000;
+  --rc-accent: #D4AF3D;
+  --rc-fg: #FFFFFF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: var(--rc-bg);
+  background-color: var(--rc-fg);
+  font-family: "Poppins", Arial, Helvetica, sans-serif;
+}
+
+/* Main content area */
+.bg-gray-50 {
+  background-color: var(--rc-fg);
+}
+
+/* Buttons */
+.bg-rc-accent {
+  background-color: var(--rc-accent);
+  color: var(--rc-bg);
+}
+
+.hover\:bg-rc-accent:hover {
+  background-color: var(--rc-accent);
+  color: var(--rc-bg);
+}
+
+/* For ghost buttons with hover effect */
+.hover\:text-rc-accent:hover {
+  color: var(--rc-accent);
+}
+
+/* Header and navigation styles */
+header.bg-white, header.bg-rc-fg {
+  background-color: var(--rc-fg);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure proper contrast for text */
+.text-gray-700 {
+  color: var(--rc-bg);
+}
+
+/* Apply gold accents to interactive elements */
+button:hover:not(.bg-rc-accent), a:hover:not(.bg-rc-accent) {
+  color: var(--rc-accent);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--rc-accent);
+  border-radius: 0.375rem;
+}
+
+/* Image Resizing Styles */
+.ProseMirror .img-resizer {
+  position: relative;
+  display: inline-block;
+}
+
+.ProseMirror .img-resizer img {
+  display: block;
+}
+
+.ProseMirror .img-resizer__handle {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--rc-accent);
+  border: 1px solid white;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: nwse-resize;
+}
+
+.ProseMirror .img-resizer.ProseMirror-selectednode .img-resizer__handle {
+  display: block;
+}
+
+/* Table Styles */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+  min-width: 1em;
+  border: 2px solid #ced4da;
+  padding: 3px 5px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror table th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f1f3f5;
+}
+
+.ProseMirror table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(212, 175, 61, 0.2);
+  pointer-events: none;
+}
+
+/* Code Block Styles */
+.ProseMirror pre {
+  background-color: rgb(243, 244, 246);
+  border-radius: 0.375rem;
+  color: rgb(31, 41, 55);
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.ProseMirror code {
+  background-color: rgba(97, 97, 97, 0.1);
+  color: #616161;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+}
+
+/* Task List Styles */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+}
+
+/* Highlight Styles */
+.ProseMirror mark {
+  background-color: rgba(212, 175, 61, 0.2);
+  border-radius: 0.125rem;
+  padding: 0.125rem 0;
+}
