@@ -97,7 +97,13 @@ const LightEditor = ({ initialContent, onChange, readOnly = false, className }: 
     content: initialContent || '<p>Add content here...</p>',
     editable: !readOnly,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // Debounce content updates to prevent focus loss
+      // Only send changes after a reasonable pause in typing
+      const html = editor.getHTML();
+      clearTimeout((window as any).lightEditorUpdateTimeout);
+      (window as any).lightEditorUpdateTimeout = setTimeout(() => {
+        onChange(html);
+      }, 500);
     },
     parseOptions: {
       preserveWhitespace: 'full',
